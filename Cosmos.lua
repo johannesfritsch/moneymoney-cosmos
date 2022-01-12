@@ -67,13 +67,23 @@ function RefreshAccount (account, since)
 
   for address in string.gmatch(atomAddresses, '([^,]+)') do
     microAtomQuantity = requestMicroAtomForAtomAddress(address)
+    microAtomQuantityDelegated = requestMicroAtomDelegatedForAtomAddress(address)
     atomQuantity = convertMicroAtomToAtom(microAtomQuantity)
+    atomQuantityDelegated = convertMicroAtomToAtom(microAtomQuantityDelegated)
 
     s[#s+1] = {
       name = address,
       currency = nil,
       market = "cryptocompare",
       quantity = atomQuantity,
+      price = prices["EUR"],
+    }
+
+    s[#s+1] = {
+      name = address .. " (Delegated)",
+      currency = nil,
+      market = "cryptocompare",
+      quantity = atomQuantityDelegated,
       price = prices["EUR"],
     }
   end
@@ -94,10 +104,17 @@ function requestAtomPrice()
 end
 
 function requestMicroAtomForAtomAddress(atomAddress)
-  content = connection:get("https://node.atomscan.com/cosmos/bank/v1beta1/balances/" .. atomAddress)
+  content = connection:get("https://api.cosmos.network/bank/balances/" .. atomAddress)
   json = JSON(content)
 
-  return json:dictionary()["balances"][1]["amount"]
+  return json:dictionary()["result"][1]["amount"]
+end
+
+function requestMicroAtomDelegatedForAtomAddress(atomAddress)
+  content = connection:get("https://api.cosmos.network/staking/delegators/" .. atomAddress .. "/delegations")
+  json = JSON(content)
+
+  return json:dictionary()["result"][1]["balance"]["amount"]
 end
 
 
